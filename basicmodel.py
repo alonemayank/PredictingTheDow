@@ -6,12 +6,22 @@ from sklearn.svm import LinearSVC
 from sklearn.ensemble import RandomForestClassifier
 
 
+from nltk.stem.snowball import FrenchStemmer
+
+stemmer = FrenchStemmer()
+analyzer = CountVectorizer().build_analyzer()
+
+
+def stemmed_words(doc):
+    return (stemmer.stem(w) for w in analyzer(doc))
+
+
 def countVectorize(trainheadlines, testheadlines):
-    basicvectorizer = CountVectorizer()
+    basicvectorizer = CountVectorizer(stop_words='english', ngram_range=(1, 1), analyzer=stemmed_words)
+    # basicvectorizer = CountVectorizer()
     basictrain = basicvectorizer.fit_transform(trainheadlines)
     basictest = basicvectorizer.transform(testheadlines)
     return basictrain, basictest, basicvectorizer
-
 
 def tdIdfVectorize(trainheadlines, testheadlines):
     td = TfidfVectorizer()
@@ -21,7 +31,7 @@ def tdIdfVectorize(trainheadlines, testheadlines):
 
 
 def runKNN(basictrain, basictest, train, test):
-    neigh = KNeighborsClassifier(n_neighbors=10)
+    neigh = KNeighborsClassifier(n_neighbors=1)
     neigh.fit(basictrain, train["Label"])
     predictions = neigh.predict(basictest)
     matrix = pandas.crosstab(test["Label"], predictions, rownames=["Actual"], colnames=["Predicted"])
@@ -119,60 +129,22 @@ st = LancasterStemmer()
 train = data[data['Date'] < '20150101']
 test = data[data['Date'] > '20141231']
 
-# steming
 
-from nltk.stem.snowball import FrenchStemmer
-
-stemmer = FrenchStemmer()
-analyzer = CountVectorizer().build_analyzer()
-
-
-def stemmed_words(doc):
-    return (stemmer.stem(w) for w in analyzer(doc))
-
-
-def countVectorize(trainheadlines, testheadlines):
-    basicvectorizer = CountVectorizer(stop_words='english', ngram_range=(1, 1), analyzer=stemmed_words)
-    # basicvectorizer = CountVectorizer()
-    basictrain = basicvectorizer.fit_transform(trainheadlines)
-    basictest = basicvectorizer.transform(testheadlines)
-    return basictrain, basictest, basicvectorize
 
 
 # stem(word) for word in sentence.split(" ")
-newX = ""
+
 testheadlines = []
 #
 for row in range(0, len(test.index)):
-    for x in test.iloc[row, 2:27]:
-        for temp in x.split(' '):
-            temp = st.stem(temp)
-            newX += temp + " "
-    testheadlines.append(''.join(pattern.sub('', str(newX).lower())))
+    testheadlines.append(''.join(pattern.sub('', str(x).lower())for x in test.iloc[row,2:27]))
 
 trainheadlines = []
-newX = ""
-temp = ""
-x = ""
+
 
 for row in range(0, len(train.index)):
-    for x in train.iloc[row, 2:27]:
-        # print (x)
-        x = str(x)
-        for temp in x.split(' '):
-            temp = st.stem(temp)
-            newX += temp + " "
-    trainheadlines.append(''.join(pattern.sub('', str(newX).lower())))
+    trainheadlines.append(''.join(pattern.sub('', str(x).lower()) for x in train.iloc[row,2:27]))
 
-# print test and train data
-# for each in testheadlines:
-# print (each)
-# print (" ")
-
-# for each in trainheadlines:
-# print (each)
-# print (" ")
-#
 
 sent = 'warning with new localization things are being beginning'
 # for temp in sent.split(' '): print (st.stem(temp))
