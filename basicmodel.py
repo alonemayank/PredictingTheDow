@@ -1,6 +1,6 @@
 import pandas
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
+from sklearn import linear_model as LR
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.ensemble import RandomForestClassifier
@@ -41,7 +41,7 @@ def runKNN(basictrain, basictest, train, test):
 
 
 def runLogisticReegresion(basictrain, basictest, train, test):
-    logModel = LogisticRegression()
+    logModel = LR.LogisticRegression()
     logModel = logModel.fit(basictrain, train["Label"])
     predictions = logModel.predict(basictest)
     matrix = pandas.crosstab(test["Label"], predictions, rownames=["Actual"], colnames=["Predicted"])
@@ -69,6 +69,15 @@ def runRandomForestClassifier(basictrain, basictest, train, test):
     accuracy(matrix)
     return rfc
 
+def linearModel(basictrain,basictest, train,test):
+	linearModelObj= LR.LinearRegression()
+	linearModelObj= linearModelObj.fit(basictrain, train["Open"])
+	predictions= linearModelObj.predict(basictest)
+	matrix= pandas.crosstab(test["Open"],predictions,rownames=["Actual"], colnames=["Predicted"])
+	print ("Running Linear Regression gives accuracy of "),
+	accuracy(matrix)
+	return linearModelObj
+
 
 def accuracy(matrix):
     correct = matrix[0][0] + matrix[1][1]
@@ -88,7 +97,8 @@ def CoefToHTML(basicvectorizer, basicmodel, filename):
 
 # def main():
 # the labels in this file are either 0,1 (will modify accordinly since this not binary classficattion)
-data = pandas.read_csv("stocknews/Combined_News_DJIA.csv")
+data = pandas.read_csv("stocknews/full-table.csv")
+
 
 # Stop word removal
 
@@ -153,17 +163,20 @@ sent = 'warning with new localization things are being beginning'
 cvtrain, cvtest, cvVector = countVectorize(trainheadlines, testheadlines)
 tdTrain, tdTest, tdVector = tdIdfVectorize(trainheadlines, testheadlines)
 
+print(data.head(n=10))
 print('Running with Count Vectorizer')
 logCV = runLogisticReegresion(cvtrain, cvtest, train, test)
 runKNN(cvtrain, cvtest, train, test)
 runLinearSVC(cvtrain, cvtest, train, test)
 runRandomForestClassifier(cvtrain, cvtest, train, test)
+linearModel(cvtrain, cvtest, train, test)
 
 print("\nRunning with TD-IDF")
 runLogisticReegresion(tdTrain, tdTest, train, test)
 runKNN(tdTrain, tdTest, train, test)
 svmidf = runLinearSVC(tdTrain, tdTest, train, test)
 runRandomForestClassifier(tdTrain, tdTest, train, test)
+linearModel(tdTrain, tdTest, train, test)
 
 CoefToHTML(cvVector, logCV, "log-countVector")
 CoefToHTML(tdVector, svmidf, "SVM-IDF")
@@ -173,5 +186,3 @@ CoefToHTML(tdVector, svmidf, "SVM-IDF")
 
 # if __name__ == "__main__":
 #	main()
-
-
